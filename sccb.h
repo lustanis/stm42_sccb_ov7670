@@ -1,10 +1,11 @@
-#include "stm32f4xx_hal.h"
 #ifdef __cplusplus
+
 #include <cstdint>
+#include "stm32f4xx_hal.h"
 
 class Sccb {
 public:
-    Sccb(uint16_t sda, uint16_t scl);
+    Sccb(uint16_t sda, uint16_t scl, GPIO_TypeDef* gpiOx);
     void init();
     bool writeSlaveRegister(uint8_t slaveAddress, uint8_t registerAddress, uint8_t value);
     bool readSlaveRegister(uint8_t slaveAddress, uint8_t registerAddress, uint8_t& value);
@@ -14,6 +15,7 @@ private:
 
     const uint16_t SDA;
     const uint16_t SCL;
+    GPIO_TypeDef *GPIOx;
     void sdaSetLow(uint32_t timeToWait) const;
     void sdaSetHigh(uint32_t timeToWait) const;
     void sclSetHigh(uint32_t timeToWait) const;

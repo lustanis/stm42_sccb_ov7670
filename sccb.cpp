@@ -1,5 +1,17 @@
 #include "sccb.hpp"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+
+void sendUart(const char* c);
+void sendUUart(const uint32_t c);
+
+#ifdef __cplusplus
+}
+#endif
+
 namespace {
 
 bool isTimeNotElapsed(uint32_t startTime, uint32_t wait) {
@@ -42,35 +54,35 @@ uint32_t DWT_Delay_Init() {
 
 void Sccb::sdaSetHigh(uint32_t timeToWait) const {
     const uint32_t start = DWT->CYCCNT;
-    GPIOB->BSRR = (uint32_t) SDA;
+    GPIOx->BSRR = (uint32_t) SDA;
     delay(start, timeToWait);
 }
 
 void Sccb::sdaSetLow(uint32_t timeToWait) const {
     const uint32_t start = DWT->CYCCNT;
-    GPIOB->BSRR = (uint32_t) SDA << 16U;
+    GPIOx->BSRR = (uint32_t) SDA << 16U;
     delay(start, timeToWait);
 }
 
 void Sccb::sclSetHigh(uint32_t timeToWait) const {
     const uint32_t start = DWT->CYCCNT;
-    GPIOB->BSRR = (uint32_t) SCL;
+    GPIOx->BSRR = (uint32_t) SCL;
     delay(start, timeToWait);
 }
 
 void Sccb::sclSetLow(uint32_t timeToWait) const {
     const uint32_t start = DWT->CYCCNT;
-    GPIOB->BSRR = (uint32_t) SCL << 16U;
+    GPIOx->BSRR = (uint32_t) SCL << 16U;
     delay(start, timeToWait);
 }
 
 
 GPIO_PinState Sccb::getSda() const {
-    return HAL_GPIO_ReadPin(GPIOB, SDA);
+    return HAL_GPIO_ReadPin(GPIOx, SDA);
 }
 
 GPIO_PinState Sccb::getScl() const {
-    return HAL_GPIO_ReadPin(GPIOB, SCL);
+    return HAL_GPIO_ReadPin(GPIOx, SCL);
 }
 
 
@@ -83,23 +95,23 @@ void Sccb::sclAsInput() {
 }
 
 void Sccb::sdaAsOutput() const {
-    GPIOB->BSRR = (uint32_t) SDA;
+    GPIOx->BSRR = (uint32_t) SDA;
     GPIO_InitTypeDef GPIO_InitStruct = {0};
     GPIO_InitStruct.Pin = SDA;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+    HAL_GPIO_Init(GPIOx, &GPIO_InitStruct);
 }
 
 void Sccb::sclAsOutput() const {
-    GPIOB->BSRR = (uint32_t) SCL;
+    GPIOx->BSRR = (uint32_t) SCL;
     GPIO_InitTypeDef GPIO_InitStruct = {0};
     GPIO_InitStruct.Pin = SCL;
     GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_OD;
     GPIO_InitStruct.Pull = GPIO_NOPULL;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-    HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+    HAL_GPIO_Init(GPIOx, &GPIO_InitStruct);
 }
 void Sccb::sendNack() {
     sdaSetHigh(0);
@@ -142,6 +154,8 @@ bool Sccb::sendBytes(uint8_t* ptr, uint8_t size) {
             sclSetLow(0);
         }
         if(!waitForSlaveAck()) {
+            sendUart("dupa no slave ack: ");
+            sendUUart(start);
             return false;
         }
         sclSetLow(0);
@@ -218,7 +232,7 @@ bool Sccb::readSlaveRegister(uint8_t const slaveAddress, uint8_t const registerA
     return true;
 }
 
-Sccb::Sccb(const uint16_t sda, uint16_t scl) : SDA(sda), SCL(scl) {
+Sccb::Sccb(const uint16_t sda, uint16_t scl, GPIO_TypeDef* gpiOx) : SDA(sda), SCL(scl), GPIOx(gpiOx) {
     halfFreq = HAL_RCC_GetHCLKFreq() / 100'000 / 2;
 }
 
